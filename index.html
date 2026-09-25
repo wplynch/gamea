@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Lab Explorer - Root Words Game</title>
+    <!-- Tailwind CSS for Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Custom Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #0e172a 0%, #1e1b4b 50%, #311042 100%);
+            touch-action: manipulation;
+        }
+        .font-game {
+            font-family: 'Fredoka One', cursive;
+        }
+        .lab-glass {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .lab-card {
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .lab-card:hover {
+            transform: translateY(-5px) scale(1.02);
+        }
+        .bouncy {
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(168, 85, 247, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(168, 85, 247, 0.9); }
+        }
+        .glowing-btn {
+            animation: pulse-glow 2.5s infinite;
+        }
+        .bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float 6s infinite ease-in;
+        }
+        @keyframes float {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            50% { opacity: 0.8; }
+            100% { transform: translateY(-100px) scale(1.2); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="min-h-screen text-white overflow-x-hidden flex flex-col justify-between select-none">
+
+    <!-- Background Bubbles -->
+    <div id="bubble-container" class="fixed inset-0 overflow-hidden pointer-events-none z-0"></div>
+
+    <!-- Navigation Header -->
+    <header class="relative z-10 w-full px-4 py-3 lab-glass border-b border-purple-500/30">
+        <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
+            <!-- Brand Title -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="app.showHome()">
+                <div class="w-12 h-12 bg-gradient-to-tr from-purple-600 to-pink-500 rounded-2xl flex items-center justify-center text-2xl shadow-lg border-2 border-white/40">
+                    🧪
+                </div>
+                <div>
+                    <h1 class="font-game text-2xl md:text-3xl text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-300 to-cyan-300">
+                        WORD LAB
+                    </h1>
+                    <p class="text-xs text-purple-200 font-semibold tracking-wide">3rd Grade Root Word Academy</p>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="flex items-center gap-3 md:gap-6 bg-slate-900/60 px-4 py-2 rounded-2xl border border-white/10">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">⭐</span>
+                    <div>
+                        <div class="text-[10px] text-gray-400 uppercase font-bold">Stars</div>
+                        <div id="stat-stars" class="font-game text-yellow-400 text-lg leading-none">0</div>
+                    </div>
+                </div>
+                <div class="h-8 w-[1px] bg-white/10"></div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">🏆</span>
+                    <div>
+                        <div class="text-[10px] text-gray-400 uppercase font-bold">Score</div>
+                        <div id="stat-score" class="font-game text-cyan-400 text-lg leading-none">0</div>
+                    </div>
+                </div>
+                <div class="h-8 w-[1px] bg-white/10"></div>
+                <button id="sound-toggle-btn" onclick="sound.toggleMute()" class="w-10 h-10 rounded-xl bg-purple-600/40 hover:bg-purple-600/60 border border-purple-400/30 flex items-center justify-center transition">
+                    <i id="sound-icon" class="fas fa-volume-up text-lg text-purple-200"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="relative z-10 flex-grow max-w-5xl w-full mx-auto p-4 flex flex-col justify-center">
+
+        <!-- VIEW 1: HOME MENU -->
+        <section id="view-home" class="space-y-8 py-6">
+            <div class="text-center space-y-3">
+                <span class="inline-block px-4 py-1.5 rounded-full bg-purple-500/20 border border-purple-400/40 text-purple-200 font-bold text-sm tracking-wide">
+                    🔬 WELCOME JUNIOR SCIENTIST!
+                </span>
+                <h2 class="font-game text-4xl md:text-5xl text-white tracking-wide leading-tight">
+                    Choose Your Experiment
+                </h2>
+                <p class="text-purple-200 max-w-xl mx-auto text-base">
+                    Mix root words, prefixes, and suffixes together in the lab to discover new word superpowers!
+                </p>
+            </div>
+
+            <!-- Mini Game Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Game 1 Card -->
+                <div onclick="app.startGame(1)" class="lab-glass rounded-3xl p-6 lab-card cursor-pointer border-t-4 border-cyan-400 flex flex-col justify-between relative overflow-hidden group">
+                    <div class="space-y-4">
+                        <div class="w-16 h-16 rounded-2xl bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-3xl group-hover:scale-110 transition">
+                            🧪
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold text-cyan-300 uppercase tracking-widest">Level 1</span>
+                            <h3 class="font-game text-2xl text-white mt-1">Root Matching</h3>
+                            <p class="text-sm text-gray-300 mt-2">Match base root words with their secret meanings in the beaker test station!</p>
+                        </div>
+                    </div>
+                    <button class="mt-6 w-full py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-game text-lg transition shadow-lg shadow-cyan-500/20">
+                        PLAY NOW
+                    </button>
+                </div>
+
+                <!-- Game 2 Card -->
+                <div onclick="app.startGame(2)" class="lab-glass rounded-3xl p-6 lab-card cursor-pointer border-t-4 border-pink-400 flex flex-col justify-between relative overflow-hidden group">
+                    <div class="space-y-4">
+                        <div class="w-16 h-16 rounded-2xl bg-pink-500/20 border border-pink-400/50 flex items-center justify-center text-3xl group-hover:scale-110 transition">
+                            ⚡
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold text-pink-300 uppercase tracking-widest">Level 2</span>
+                            <h3 class="font-game text-2xl text-white mt-1">Word Synthesizer</h3>
+                            <p class="text-sm text-gray-300 mt-2">Combine Prefixes + Root Words + Suffixes to create target formulas!</p>
+                        </div>
+                    </div>
+                    <button class="mt-6 w-full py-3 rounded-xl bg-pink-500 hover:bg-pink-400 text-slate-950 font-game text-lg transition shadow-lg shadow-pink-500/20">
+                        PLAY NOW
+                    </button>
+                </div>
+
+                <!-- Game 3 Card -->
+                <div onclick="app.startGame(3)" class="lab-glass rounded-3xl p-6 lab-card cursor-pointer border-t-4 border-yellow-400 flex flex-col justify-between relative overflow-hidden group">
+                    <div class="space-y-4">
+                        <div class="w-16 h-16 rounded-2xl bg-yellow-500/20 border border-yellow-400/50 flex items-center justify-center text-3xl group-hover:scale-110 transition">
+                            🔍
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold text-yellow-300 uppercase tracking-widest">Level 3</span>
+                            <h3 class="font-game text-2xl text-white mt-1">Word Detective</h3>
+                            <p class="text-sm text-gray-300 mt-2">Crack mystery sentence codes using your root word context clue scanner!</p>
+                        </div>
+                    </div>
+                    <button class="mt-6 w-full py-3 rounded-xl bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-game text-lg transition shadow-lg shadow-yellow-500/20">
+                        PLAY NOW
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Cheatsheet Banner -->
+            <div class="lab-glass rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 border border-white/10">
+                <div class="flex items-center gap-3">
+                    <div class="text-2xl">💡</div>
+                    <div>
+                        <div class="font-game text-sm text-purple-200">LAB TIP FOR 3RD GRADERS</div>
+                        <div class="text-xs text-gray-300">A <span class="text-pink-300 font-bold">Prefix</span> goes at the START, a <span class="text-cyan-300 font-bold">Root Word</span> is the BASE, and a <span class="text-yellow-300 font-bold">Suffix</span> goes at the END!</div>
+                    </div>
+                </div>
+                <button onclick="app.showGuideModal()" class="px-4 py-2 rounded-xl bg-purple-600/40 hover:bg-purple-600/60 border border-purple-400/40 text-xs font-bold tracking-wider">
+                    VIEW ROOT DICTIONARY
+                </button>
+            </div>
+        </section>
+
+        <!-- VIEW 2: GAME ARENA -->
+        <section id="view-game" class="hidden space-y-6">
+            <!-- Game Top Header Bar -->
+            <div class="flex items-center justify-between lab-glass px-5 py-3 rounded-2xl">
+                <button onclick="app.showHome()" class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold flex items-center gap-2">
+                    <i class="fas fa-arrow-left"></i> EXIT LAB
+                </button>
+
+                <div class="text-center">
+                    <div id="game-title" class="font-game text-xl text-yellow-300">Root Word Match</div>
+                    <div id="game-progress-text" class="text-xs text-purple-200">Question 1 of 5</div>
+                </div>
+
+                <div class="w-24 bg-slate-800 rounded-full h-3 border border-white/10 overflow-hidden">
+                    <div id="game-progress-bar" class="bg-gradient-to-r from-pink-500 to-yellow-400 h-full w-1/5 transition-all duration-300"></div>
+                </div>
+            </div>
+
+            <!-- Dynamic Interactive Play Area -->
+            <div id="game-play-area" class="lab-glass rounded-3xl p-6 md:p-8 relative min-h-[420px] flex flex-col justify-center">
+                <!-- Content generated dynamically via JS -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="relative z-10 py-4 text-center text-xs text-purple-300/60 border-t border-purple-500/10">
+        Word Lab Explorer &bull; Interactive 3rd Grade Learning Tool
+    </footer>
+
+    <!-- Root Dictionary Modal -->
+    <div id="guide-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="lab-glass max-w-2xl w-full rounded-3xl p-6 space-y-6 max-h-[85vh] overflow-y-auto border border-purple-400/40">
+            <div class="flex items-center justify-between border-b border-white/10 pb-4">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">📖</span>
+                    <h3 class="font-game text-2xl text-yellow-300">Lab Root Word Guide</h3>
+                </div>
+                <button onclick="app.hideGuideModal()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm" id="dictionary-list">
+                <!-- Dynamic dictionary items inserted here -->
+            </div>
+
+            <button onclick="app.hideGuideModal()" class="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 font-game text-white">
+                GOT IT, BACK TO THE LAB!
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Sound Effects Engine using pure Web Audio API
+         */
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            toggleMute() {
+                this.muted = !this.muted;
+                const icon = document.getElementById('sound-icon');
+                if (this.muted) {
+                    icon.className = 'fas fa-volume-mute text-lg text-red-400';
+                } else {
+                    icon.className = 'fas fa-volume-up text-lg text-purple-200';
+                    this.playPop();
+                }
+            }
+
+            playPop() {
+                if (this.muted) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.08);
+
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.08);
+            }
+
+            playSuccess() {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+
+                    gain.gain.setValueAtTime(0.2, now + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.2);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(now + idx * 0.08);
+                    osc.stop(now + idx * 0.08 + 0.2);
+                });
+            }
+
+            playError() {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.linearRampToValueAtTime(110, now + 0.25);
+
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.25);
+            }
+
+            playLevelUp() {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const freqs = [440, 554.37, 659.25, 880, 1108.73];
+                freqs.forEach((f, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(f, now + i * 0.1);
+                    gain.gain.setValueAtTime(0.25, now + i * 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.3);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i * 0.1);
+                    osc.stop(now + i * 0.1 + 0.3);
+                });
+            }
+        }
+
+        const sound = new SoundEngine();
+
+        /**
+         * 3rd Grade Curriculum Dataset
+         */
+        const DICTIONARY = [
+            { root: "bio", meaning: "life", example: "biology, biography" },
+            { root: "geo", meaning: "earth", example: "geology, geography" },
+            { root: "tele", meaning: "far away", example: "telephone, telescope" },
+            { root: "vis / vid", meaning: "see", example: "visible, video" },
+            { root: "aud", meaning: "hear", example: "audio, audience" },
+            { root: "phon", meaning: "sound", example: "phonics, saxophone" },
+            { root: "graph", meaning: "write or draw", example: "autograph, paragraph" },
+            { root: "port", meaning: "carry", example: "transport, portable" },
+            { root: "tract", meaning: "pull or drag", example: "tractor, attract" },
+            { root: "rupt", meaning: "break", example: "erupt, interrupt" }
+        ];
+
+        const LEVEL1_DATA = [
+            { root: "tele", meaning: "far away", options: ["far away", "water", "small", "fast"] },
+            { root: "bio", meaning: "life", options: ["sound", "life", "earth", "write"] },
+            { root: "geo", meaning: "earth", options: ["see", "hear", "earth", "carry"] },
+            { root: "vis", meaning: "see", options: ["see", "break", "far away", "life"] },
+            { root: "aud", meaning: "hear", options: ["pull", "sound", "hear", "earth"] },
+            { root: "port", meaning: "carry", options: ["carry", "write", "break", "see"] },
+            { root: "rupt", meaning: "break", options: ["life", "break", "far away", "hear"] }
+        ];
+
+        const LEVEL2_DATA = [
+            { target: "rebuilding", prefix: "re-", root: "build", suffix: "-ing", meaning: "building again right now" },
+            { target: "unhelpful", prefix: "un-", root: "help", suffix: "-ful", meaning: "not full of help" },
+            { target: "previewed", prefix: "pre-", root: "view", suffix: "-ed", meaning: "looked at before" },
+            { target: "disagreeable", prefix: "dis-", root: "agree", suffix: "-able", meaning: "not able to agree" },
+            { target: "reprinted", prefix: "re-", root: "print", suffix: "-ed", meaning: "printed again in the past" }
+        ];
+
+        const LEVEL3_DATA = [
+            {
+                sentence: "The scientist used a _____ to see tiny stars that were far away.",
+                root: "tele",
+                word: "telescope",
+                options: ["telescope", "microscope", "auditorium", "biography"],
+                explanation: "Root 'tele' means far away!"
+            },
+            {
+                sentence: "Can you sign your _____ on this paper for me?",
+                root: "graph",
+                word: "autograph",
+                options: ["autograph", "transport", "telephone", "erupt"],
+                explanation: "Root 'graph' means write or draw!"
+            },
+            {
+                sentence: "The volcano was about to _____ hot lava all over the rocks!",
+                root: "rupt",
+                word: "erupt",
+                options: ["erupt", "attract", "port", "video"],
+                explanation: "Root 'rupt' means break burst open!"
+            },
+            {
+                sentence: "The speaker spoke clearly into the microphone so the _____ could hear.",
+                root: "aud",
+                word: "audience",
+                options: ["audience", "geology", "tractor", "telegraph"],
+                explanation: "Root 'aud' means hear!"
+            }
+        ];
+
+        /**
+         * Main Game Application Class
+         */
+        class WordLabApp {
+            constructor() {
+                this.stars = 0;
+                this.score = 0;
+                this.currentGame = null;
+                this.currentIndex = 0;
+                this.gameData = [];
+                this.selectedPart = { prefix: null, root: null, suffix: null };
+
+                this.initBubbles();
+                this.populateDictionary();
+            }
+
+            initBubbles() {
+                const container = document.getElementById('bubble-container');
+                for (let i = 0; i < 15; i++) {
+                    const bubble = document.createElement('div');
+                    bubble.className = 'bubble';
+                    const size = Math.random() * 40 + 10;
+                    bubble.style.width = `${size}px`;
+                    bubble.style.height = `${size}px`;
+                    bubble.style.left = `${Math.random() * 100}%`;
+                    bubble.style.animationDelay = `${Math.random() * 5}s`;
+                    bubble.style.animationDuration = `${Math.random() * 4 + 4}s`;
+                    container.appendChild(bubble);
+                }
+            }
+
+            populateDictionary() {
+                const list = document.getElementById('dictionary-list');
+                list.innerHTML = DICTIONARY.map(item => `
+                    <div class="bg-slate-900/60 p-3 rounded-2xl border border-white/10 flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <span class="font-game text-cyan-300 text-lg">${item.root}</span>
+                            <span class="text-xs bg-purple-500/30 px-2.5 py-0.5 rounded-full border border-purple-400/30 text-purple-200">${item.meaning}</span>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2">Examples: <span class="text-gray-200 italic">${item.example}</span></p>
+                    </div>
+                `).join('');
+            }
+
+            showHome() {
+                sound.playPop();
+                document.getElementById('view-home').classList.remove('hidden');
+                document.getElementById('view-game').classList.add('hidden');
+            }
+
+            showGuideModal() {
+                sound.playPop();
+                document.getElementById('guide-modal').classList.remove('hidden');
+            }
+
+            hideGuideModal() {
+                sound.playPop();
+                document.getElementById('guide-modal').classList.add('hidden');
+            }
+
+            addScore(pts, starsGained = 1) {
+                this.score += pts;
+                this.stars += starsGained;
+                document.getElementById('stat-score').innerText = this.score;
+                document.getElementById('stat-stars').innerText = this.stars;
+            }
+
+            startGame(gameId) {
+                sound.playPop();
+                this.currentGame = gameId;
+                this.currentIndex = 0;
+
+                document.getElementById('view-home').classList.add('hidden');
+                document.getElementById('view-game').classList.remove('hidden');
+
+                if (gameId === 1) {
+                    document.getElementById('game-title').innerText = "🧪 Root Matching Lab";
+                    this.gameData = [...LEVEL1_DATA].sort(() => Math.random() - 0.5);
+                    this.renderLevel1();
+                } else if (gameId === 2) {
+                    document.getElementById('game-title').innerText = "⚡ Word Synthesizer";
+                    this.gameData = [...LEVEL2_DATA].sort(() => Math.random() - 0.5);
+                    this.renderLevel2();
+                } else if (gameId === 3) {
+                    document.getElementById('game-title').innerText = "🔍 Word Detective Scanner";
+                    this.gameData = [...LEVEL3_DATA].sort(() => Math.random() - 0.5);
+                    this.renderLevel3();
+                }
+            }
+
+            updateProgress() {
+                const total = this.gameData.length;
+                const current = this.currentIndex + 1;
+                document.getElementById('game-progress-text').innerText = `Question ${current} of ${total}`;
+                document.getElementById('game-progress-bar').style.width = `${(current / total) * 100}%`;
+            }
+
+            renderLevel1() {
+                this.updateProgress();
+                const data = this.gameData[this.currentIndex];
+                const area = document.getElementById('game-play-area');
+
+                const shuffledOptions = [...data.options].sort(() => Math.random() - 0.5);
+
+                area.innerHTML = `
+                    <div class="text-center space-y-6 max-w-xl mx-auto">
+                        <div class="space-y-2">
+                            <span class="text-xs uppercase tracking-widest font-bold text-cyan-300">Target Root Beaker</span>
+                            <div class="inline-block relative">
+                                <div class="w-32 h-32 mx-auto rounded-3xl bg-gradient-to-b from-cyan-500/30 to-blue-600/40 border-2 border-cyan-300 flex items-center justify-center shadow-lg shadow-cyan-500/20 bouncy">
+                                    <span class="font-game text-4xl text-yellow-300">${data.root}</span>
+                                </div>
+                            </div>
+                            <p class="text-lg text-purple-200 font-medium">What is the secret meaning of this root word?</p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 pt-2">
+                            ${shuffledOptions.map(opt => `
+                                <button onclick="app.checkLevel1('${opt}', '${data.meaning}', this)" 
+                                    class="py-4 px-6 rounded-2xl bg-slate-800/80 hover:bg-purple-600/50 border border-white/15 font-game text-lg text-white transition hover:scale-105 active:scale-95 shadow-md">
+                                    ${opt}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            checkLevel1(selected, correct, btn) {
+                if (selected === correct) {
+                    sound.playSuccess();
+                    btn.classList.remove('bg-slate-800/80');
+                    btn.classList.add('bg-green-500', 'border-green-300', 'text-slate-950');
+                    this.addScore(100, 1);
+                    this.showFeedback(true, "Great job! That's correct!", () => this.nextQuestion());
+                } else {
+                    sound.playError();
+                    btn.classList.add('bg-red-500/80', 'border-red-400');
+                    btn.disabled = true;
+                    this.showFeedback(false, "Oops! Try another formula!");
+                }
+            }
+
+            renderLevel2() {
+                this.updateProgress();
+                const data = this.gameData[this.currentIndex];
+                const area = document.getElementById('game-play-area');
+                this.selectedPart = { prefix: '', root: '', suffix: '' };
+
+                const prefixes = ["re-", "un-", "pre-", "dis-", "in-"].sort(() => Math.random() - 0.5);
+                const roots = ["build", "help", "view", "agree", "print"].sort(() => Math.random() - 0.5);
+                const suffixes = ["-ing", "-ful", "-ed", "-able", "-less"].sort(() => Math.random() - 0.5);
+
+                area.innerHTML = `
+                    <div class="space-y-6 max-w-2xl mx-auto text-center">
+                        <div>
+                            <span class="text-xs uppercase tracking-widest font-bold text-pink-300">Target Clue</span>
+                            <h3 class="font-game text-2xl text-yellow-300 mt-1">"${data.meaning}"</h3>
+                            <p class="text-xs text-purple-200 mt-1">Combine prefix + root word + suffix to synthesize the word!</p>
+                        </div>
+
+                        <!-- Synthesizer Slot Display -->
+                        <div class="flex items-center justify-center gap-2 md:gap-4 my-4">
+                            <div id="slot-prefix" class="w-24 md:w-32 h-16 rounded-2xl bg-pink-500/20 border-2 border-dashed border-pink-400 flex items-center justify-center font-game text-lg md:text-xl text-pink-200">
+                                Prefix
+                            </div>
+                            <span class="text-xl text-gray-400">+</span>
+                            <div id="slot-root" class="w-24 md:w-32 h-16 rounded-2xl bg-cyan-500/20 border-2 border-dashed border-cyan-400 flex items-center justify-center font-game text-lg md:text-xl text-cyan-200">
+                                Root
+                            </div>
+                            <span class="text-xl text-gray-400">+</span>
+                            <div id="slot-suffix" class="w-24 md:w-32 h-16 rounded-2xl bg-yellow-500/20 border-2 border-dashed border-yellow-400 flex items-center justify-center font-game text-lg md:text-xl text-yellow-200">
+                                Suffix
+                            </div>
+                        </div>
+
+                        <!-- Selector Lists -->
+                        <div class="grid grid-cols-3 gap-3 pt-2">
+                            <div class="space-y-2">
+                                <div class="text-xs font-bold text-pink-300 uppercase">Prefixes</div>
+                                ${prefixes.map(p => `<button onclick="app.selectSynthesizerPart('prefix', '${p}', this)" class="synth-p w-full py-2 bg-slate-800 rounded-xl hover:bg-pink-600/40 text-sm font-game">${p}</button>`).join('')}
+                            </div>
+                            <div class="space-y-2">
+                                <div class="text-xs font-bold text-cyan-300 uppercase">Roots</div>
+                                ${roots.map(r => `<button onclick="app.selectSynthesizerPart('root', '${r}', this)" class="synth-r w-full py-2 bg-slate-800 rounded-xl hover:bg-cyan-600/40 text-sm font-game">${r}</button>`).join('')}
+                            </div>
+                            <div class="space-y-2">
+                                <div class="text-xs font-bold text-yellow-300 uppercase">Suffixes</div>
+                                ${suffixes.map(s => `<button onclick="app.selectSynthesizerPart('suffix', '${s}', this)" class="synth-s w-full py-2 bg-slate-800 rounded-xl hover:bg-yellow-600/40 text-sm font-game">${s}</button>`).join('')}
+                            </div>
+                        </div>
+
+                        <button onclick="app.checkLevel2()" class="w-full py-3 mt-4 rounded-2xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 font-game text-lg text-white shadow-lg shadow-pink-500/20">
+                            MIX FORMULA 🧪
+                        </button>
+                    </div>
+                `;
+            }
+
+            selectSynthesizerPart(type, val, btn) {
+                sound.playPop();
+                this.selectedPart[type] = val;
+
+                // Highlight UI Slot
+                const slot = document.getElementById(`slot-${type}`);
+                slot.innerText = val;
+                slot.classList.remove('border-dashed');
+                slot.classList.add('border-solid', 'bg-white/10');
+
+                // Button state toggle inside column
+                const prefixClass = type === 'prefix' ? 'synth-p' : type === 'root' ? 'synth-r' : 'synth-s';
+                document.querySelectorAll(`.${prefixClass}`).forEach(b => b.classList.remove('ring-2', 'ring-white', 'bg-purple-600'));
+                btn.classList.add('ring-2', 'ring-white', 'bg-purple-600');
+            }
+
+            checkLevel2() {
+                const data = this.gameData[this.currentIndex];
+                if (this.selectedPart.prefix === data.prefix && 
+                    this.selectedPart.root === data.root && 
+                    this.selectedPart.suffix === data.suffix) {
+                    
+                    sound.playSuccess();
+                    this.addScore(150, 2);
+                    this.showFeedback(true, `Awesome! You synthesized "${data.target}"!`, () => this.nextQuestion());
+                } else {
+                    sound.playError();
+                    this.showFeedback(false, "Formula unstable! Check your prefix, root, and suffix!");
+                }
+            }
+
+            renderLevel3() {
+                this.updateProgress();
+                const data = this.gameData[this.currentIndex];
+                const area = document.getElementById('game-play-area');
+
+                area.innerHTML = `
+                    <div class="space-y-6 max-w-xl mx-auto text-center">
+                        <div class="space-y-2">
+                            <span class="inline-block px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-300 font-bold text-xs border border-yellow-400/30">
+                                ROOT CLUE: "${data.root}"
+                            </span>
+                            <div class="bg-slate-900/80 p-6 rounded-3xl border border-white/10 shadow-inner">
+                                <p class="text-xl leading-relaxed text-gray-100 font-medium">
+                                    "${data.sentence.replace('_____', '<span class="text-yellow-400 underline underline-offset-4 font-game">_______</span>')}"
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            ${data.options.map(opt => `
+                                <button onclick="app.checkLevel3('${opt}', '${data.word}', '${data.explanation}', this)" 
+                                    class="py-4 px-6 rounded-2xl bg-slate-800/80 hover:bg-yellow-500/40 border border-white/15 font-game text-lg text-white transition hover:scale-105 shadow-md">
+                                    ${opt}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            checkLevel3(selected, correct, explanation, btn) {
+                if (selected === correct) {
+                    sound.playSuccess();
+                    btn.classList.remove('bg-slate-800/80');
+                    btn.classList.add('bg-yellow-400', 'text-slate-950', 'font-bold');
+                    this.addScore(200, 2);
+                    this.showFeedback(true, `Correct Detective! ${explanation}`, () => this.nextQuestion());
+                } else {
+                    sound.playError();
+                    btn.classList.add('bg-red-500/80', 'border-red-400');
+                    btn.disabled = true;
+                    this.showFeedback(false, "Not quite detective! Keep scanning!");
+                }
+            }
+
+            showFeedback(isSuccess, message, onComplete = null) {
+                const modal = document.createElement('div');
+                modal.className = 'absolute inset-0 bg-slate-950/90 rounded-3xl flex flex-col items-center justify-center p-6 text-center z-20 space-y-4 animate-fade-in';
+                
+                modal.innerHTML = `
+                    <div class="text-6xl ${isSuccess ? 'bouncy' : ''}">${isSuccess ? '🎉' : '🧪'}</div>
+                    <h3 class="font-game text-3xl ${isSuccess ? 'text-green-400' : 'text-pink-400'}">
+                        ${isSuccess ? 'EUREKA!' : 'TRY AGAIN!'}
+                    </h3>
+                    <p class="text-gray-200 text-base max-w-md">${message}</p>
+                    ${onComplete ? `
+                        <button id="feedback-next-btn" class="px-8 py-3 rounded-2xl bg-cyan-500 hover:bg-cyan-400 font-game text-slate-950 text-lg transition shadow-lg">
+                            CONTINUE
+                        </button>
+                    ` : `
+                        <button onclick="this.parentElement.remove()" class="px-8 py-3 rounded-2xl bg-purple-600 hover:bg-purple-500 font-game text-white text-lg transition">
+                            RETRY
+                        </button>
+                    `}
+                `;
+
+                document.getElementById('game-play-area').appendChild(modal);
+
+                if (onComplete) {
+                    document.getElementById('feedback-next-btn').onclick = () => {
+                        modal.remove();
+                        onComplete();
+                    };
+                }
+            }
+
+            nextQuestion() {
+                this.currentIndex++;
+                if (this.currentIndex >= this.gameData.length) {
+                    this.completeGame();
+                } else {
+                    if (this.currentGame === 1) this.renderLevel1();
+                    if (this.currentGame === 2) this.renderLevel2();
+                    if (this.currentGame === 3) this.renderLevel3();
+                }
+            }
+
+            completeGame() {
+                sound.playLevelUp();
+                confetti({
+                    particleCount: 120,
+                    spread: 80,
+                    origin: { y: 0.6 }
+                });
+
+                const area = document.getElementById('game-play-area');
+                area.innerHTML = `
+                    <div class="text-center space-y-6 max-w-md mx-auto py-6">
+                        <div class="text-6xl bouncy">🏆</div>
+                        <div class="space-y-2">
+                            <h2 class="font-game text-4xl text-yellow-300">EXPERIMENT COMPLETE!</h2>
+                            <p class="text-purple-200 text-sm">You are officially a Master Word Scientist!</p>
+                        </div>
+
+                        <div class="bg-slate-900/80 p-6 rounded-3xl border border-white/10 space-y-3">
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-gray-400">Total Stars Earned:</span>
+                                <span class="font-game text-yellow-400 text-xl">⭐ ${this.stars}</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-gray-400">Total Lab Score:</span>
+                                <span class="font-game text-cyan-400 text-xl">${this.score} pts</span>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4">
+                            <button onclick="app.showHome()" class="flex-1 py-3.5 rounded-2xl bg-purple-600 hover:bg-purple-500 font-game text-white shadow-lg">
+                                MAIN MENU
+                            </button>
+                            <button onclick="app.startGame(${this.currentGame})" class="flex-1 py-3.5 rounded-2xl bg-cyan-500 hover:bg-cyan-400 font-game text-slate-950 shadow-lg">
+                                PLAY AGAIN
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        let app;
+        window.addEventListener('DOMContentLoaded', () => {
+            app = new WordLabApp();
+        });
+    </script>
+</body>
+</html>
